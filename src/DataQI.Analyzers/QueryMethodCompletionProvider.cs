@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,6 +8,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Options;
+using Microsoft.CodeAnalysis.Tags;
 using Microsoft.CodeAnalysis.Text;
 
 using DataQI.Analyzers.Completion.Extensions;
@@ -20,6 +23,7 @@ namespace DataQI.Analyzers
     [Shared]
     public class QueryMethodCompletionProvider : CompletionProvider
     {
+        private const string PrefixText = "FindBy";
         private readonly IQueryTokenizer tokenizer;
         private readonly IRepositorySymbolResolver resolver;
 
@@ -50,13 +54,19 @@ namespace DataQI.Analyzers
                 var tokenPosition = context.Position > 0 ? context.Position - 1 : context.Position;
                 var token = root.FindToken(tokenPosition);
 
-                var identifierText = ExtractIdentifierText(token, context.Position);
-                if (identifierText == null || !identifierText.StartsWith("FindBy"))
+                var identifierText = ExtractIdentifierText(token) ?? ExtractEmptyNameOnInvoke(token, context.Trigger);
+                if (identifierText == null)
                     return;
 
                 var semanticModel = await context.Document.GetSemanticModelAsync(context.CancellationToken);
                 if (!resolver.TryResolveEntityType(token, semanticModel, out var entityType))
                     return;
+
+                if (!identifierText.StartsWith(PrefixText, StringComparison.Ordinal))
+                {
+                    AddPrefixItem(context, identifierText);
+                    return;
+                }
 
                 var properties = resolver.GetPublicInstanceProperties(entityType);
                 var propertyNames = properties.Select(p => p.Name).ToList();
@@ -98,7 +108,7 @@ namespace DataQI.Analyzers
             }
         }
 
-        private static string ExtractIdentifierText(SyntaxToken token, int position)
+        private static string ExtractIdentifierText(SyntaxToken token)
         {
             if (token.Parent is VariableDeclaratorSyntax variableDeclarator)
                 return variableDeclarator.Identifier.Text;
@@ -107,6 +117,32 @@ namespace DataQI.Analyzers
                 return methodDeclaration.Identifier.Text;
 
             return null;
+        }
+
+        private static string ExtractEmptyNameOnInvoke(SyntaxToken token, CompletionTrigger trigger)
+            => trigger.Kind == CompletionTriggerKind.Invoke && IsMemberNamePosition(token) ? string.Empty : null;
+
+        // After "ReturnType " no identifier exists yet: Roslyn parses the member as an IncompleteMember whose
+        // type is the last token before the caret.
+        private static bool IsMemberNamePosition(SyntaxToken token)
+        {
+            var incompleteMember = token.Parent?.AncestorsAndSelf().OfType<IncompleteMemberSyntax>().FirstOrDefault();
+
+            return incompleteMember != null
+                && incompleteMember.Parent is InterfaceDeclarationSyntax
+                && incompleteMember.Type != null
+                && incompleteMember.Type.GetLastToken() == token;
+        }
+
+        private static void AddPrefixItem(CompletionContext context, string typedText)
+        {
+            if (!PrefixText.StartsWith(typedText, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            context.AddItem(CompletionItem.Create(
+                displayText: PrefixText,
+                sortText: $"0000_{PrefixText}",
+                tags: ImmutableArray.Create(WellKnownTags.Keyword)));
         }
     }
 }
