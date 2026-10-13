@@ -73,3 +73,28 @@ Decision: finish the 7 scenarios in VS Code first, then run an equivalent pass i
 | # | Scenario | Result | Notes |
 |---|---|---|---|
 | 1-6 | (same scenarios as the VS Code table) | ✅ | "Everything working" reported for this test case after enabling the setting above (self-reported, no individual screenshots beyond Scenario 1). |
+
+## 2026-10-13: 0.1.0-poc.4 member-name trigger check
+
+- Automated Roslyn `CompletionService` insertion and manual-invoke checks: 11/11 passed.
+- VS Code popup check: not observed; macOS UI automation did not return control of the editor.
+
+## 2026-10-13: 0.1.0-preview.1 validation
+
+- Branch: `feature/complete-first-version`
+- Package: `feed/DataQI.Analyzers.0.1.0-preview.1.nupkg` (repacked after the partial-name filter)
+- Environment: VS Code CLI 1.134.0; .NET SDK 10.0.103. The VS Code C# extension and C# Dev Kit are not installed in this profile.
+- Automated Roslyn completion tests: 187 passed, 0 failed. Runtime parity tests: 10 passed, 0 failed.
+- `FindByNa` filter: a `CompletionService` regression test first returned `FindById` and failed; after filtering, the matching, missing, multiple-property, and partial-operator tests passed.
+- Sample: forced restore from the local feed and `dotnet build --no-restore` succeeded with 0 warnings and 0 errors.
+
+| Manual VS Code scenario from `VALIDATION.md` | Result |
+|---|---|
+| Type `F` without Ctrl+Space | Pending: popup not observed |
+| Ctrl+Space after the return type | Pending: popup not observed |
+| `FindBy` and `FindByNa` property lists | Pending: popup not observed |
+| Operators, `And`/`Or`, and `OrderBy` directions | Pending: popup not observed |
+| Unsafe `InStock` name omitted | Pending: popup not observed |
+| Indirect repository inheritance | Pending: popup not observed |
+
+The macOS UI automation attempt did not return control of the editor. The C# extensions must be installed and the cases rerun in an interactive VS Code session before reporting this preview as editor-validated.

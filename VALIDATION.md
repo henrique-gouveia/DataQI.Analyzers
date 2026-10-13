@@ -9,24 +9,27 @@
 
 ## Steps
 
-1. `./pack.sh 0.1.0-poc.N` (bump `N` each time — NuGet's global cache serves the old binary silently if you repack the same version).
+1. `./pack.sh 0.1.0-preview.1` (if repacking this version, clear only its exact entry in NuGet's global cache).
 2. `dotnet restore samples/CompletionSample/CompletionSample.csproj`
 3. Open `samples/CompletionSample` as its own folder in VS Code.
-4. Run the command **C#: Restart Language Server** and wait for the project to finish loading (status bar).
+4. Clear the sample's `obj/` and `bin/` folders, run **C#: Restart Language Server**, and wait for the project to finish loading (status bar).
 
 ## Scenarios
 
 | # | Type this in `IProductRepository` | Expected |
 |---|---|---|
-| 1 | `IEnumerable<Product> FindBy` | All public properties of `Product` suggested |
-| 2 | `IEnumerable<Product> FindByNa` | Filtered to `FindByName` |
-| 3 | `IEnumerable<Product> FindByName` | String operators, `Null`/`NotNull`, `And`, `Or` |
-| 4 | `IEnumerable<Product> FindByStock` | Comparison operators, **no** `StartingWith` |
-| 5 | `IEnumerable<Product> FindByNameStartingWithAnd` | Properties suggested again |
-| 6 | `FindBy` inside `INotARepository` | Nothing from DataQI |
-| 7 | `dotnet build` from the command line | No new warnings |
+| 1 | `IEnumerable<Product> F` without Ctrl+Space | `FindBy` appears automatically |
+| 2 | `IEnumerable<Product> ` then Ctrl+Space | `FindBy` appears |
+| 3 | `IEnumerable<Product> FindBy` | Public scalar properties of `Product` appear |
+| 4 | `IEnumerable<Product> FindByNa` | `FindByName` appears and the list is not wrongly broad |
+| 5 | `IEnumerable<Product> FindByName` | String operators, `Null`/`NotNull`, `And`, `Or`, `OrderBy` |
+| 6 | `IEnumerable<Product> FindByNameOrderBy` | Properties only; after a property, `Asc`/`Desc` only |
+| 7 | Add `public bool InStock { get; set; }` to `Product`, then type `FindBy` | `InStock` is absent; remove the temporary property afterward |
+| 8 | A repository that inherits `ICrudRepository` through another interface | The same suggestions appear |
+| 9 | `FindBy` inside `INotARepository` | Nothing from DataQI |
+| 10 | `dotnet build` from the command line | No new warnings |
 
-Mark ✅/❌ per scenario, per run (extension-only, then with Dev Kit).
+Mark ✅/❌ per scenario, per run (extension-only, then with Dev Kit). Leave a scenario pending when it was not observed in the editor.
 
 ## Validate in Rider
 
