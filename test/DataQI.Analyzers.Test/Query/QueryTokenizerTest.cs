@@ -97,6 +97,31 @@ namespace DataQI.Analyzers.Test.Query
         }
 
         [Theory]
+        [InlineData("Equals", "Equal")]
+        [InlineData("IsEquals", "Equal")]
+        public void TestTokenizesEqualsAliases(string alias, string canonical)
+        {
+            var tokens = tokenizer.Tokenize($"FindByName{alias}", BaseProperties);
+
+            Assert.Collection(tokens,
+                t => Assert.Equal(QueryTokenKind.Prefix, t.Kind),
+                t => Assert.Equal(QueryTokenKind.Property, t.Kind),
+                t => { Assert.Equal(QueryTokenKind.Operator, t.Kind); Assert.Equal(canonical, t.Text); });
+        }
+
+        [Theory]
+        [InlineData("IsContains")]
+        [InlineData("IsStartsWith")]
+        [InlineData("IsEndsWith")]
+        public void TestRejectsAliasesTheRuntimeDoesNotKnow(string alias)
+        {
+            var tokens = tokenizer.Tokenize($"FindByName{alias}", BaseProperties);
+
+            Assert.DoesNotContain(tokens, t => t.Kind == QueryTokenKind.Operator);
+            Assert.Equal(QueryTokenKind.Incomplete, tokens[tokens.Count - 1].Kind);
+        }
+
+        [Theory]
         [InlineData("Between")]
         [InlineData("Like")]
         [InlineData("Null")]
