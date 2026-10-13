@@ -69,9 +69,7 @@ namespace DataQI.Analyzers
                 }
 
                 var properties = resolver.GetQueryableProperties(entityType);
-                var propertyNames = properties.Select(p => p.Name).ToList();
-
-                var tokens = tokenizer.Tokenize(identifierText, propertyNames);
+                var tokens = tokenizer.Tokenize(identifierText, properties.Select(p => p.Name).ToList());
                 if (tokens.Count == 0)
                     return;
 
@@ -85,21 +83,25 @@ namespace DataQI.Analyzers
                     builderToken = tokens.Count > 1 ? tokens[tokens.Count - 2] : tokens[0];
                 }
 
+                var inOrderBy = tokens.Any(t => t.Kind == QueryTokenKind.OrderBy);
+                var safetyContext = inOrderBy ? PropertySafetyContext.OrderBy : PropertySafetyContext.Predicate;
+                var suggestible = properties.Where(p => PropertySafety.IsSafe(p.Name, safetyContext)).ToList();
+
                 var propertiesUsedSoFar = tokens
                     .Where(t => t.Kind == QueryTokenKind.Property)
                     .Select(t => properties.First(p => p.Name == t.Text))
                     .ToList();
 
-                var builder = builderToken.GetCompletionItemsBuilder();
+                var builder = builderToken.GetCompletionItemsBuilder(inOrderBy);
                 if (builder == null)
                     return;
 
-                var builderProperties = builderToken.Kind == QueryTokenKind.Prefix ||
-                    builderToken.Kind == QueryTokenKind.Junction
-                    ? properties
-                    : propertiesUsedSoFar;
+                var offersProperties = builderToken.Kind == QueryTokenKind.Prefix
+                    || builderToken.Kind == QueryTokenKind.Junction
+                    || builderToken.Kind == QueryTokenKind.OrderBy
+                    || builderToken.Kind == QueryTokenKind.Direction;
 
-                foreach (var item in builder.Build(identifierSoFar, builderProperties, null))
+                foreach (var item in builder.Build(identifierSoFar, offersProperties ? suggestible : propertiesUsedSoFar, null))
                     context.AddItem(item);
             }
             catch

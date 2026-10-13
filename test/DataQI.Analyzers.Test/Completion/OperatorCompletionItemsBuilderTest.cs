@@ -54,5 +54,14 @@ namespace DataQI.Analyzers.Test.Completion
             Assert.Contains(items, item => item.DisplayText == "FindByStockNotBetween" && item.InlineDescription == "2 arg(s)");
             Assert.DoesNotContain(items, item => item.DisplayText == "FindByStockStartingWith");
         }
+
+        [Fact]
+        public void TestSuggestsOrderByWithoutArgumentDescription()
+        {
+            var items = builder.Build("FindByName", new[] { GetProperty("string") }, null).ToList();
+
+            var orderBy = Assert.Single(items, item => item.DisplayText == "FindByNameOrderBy");
+            Assert.True(string.IsNullOrEmpty(orderBy.InlineDescription));
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace DataQI.Analyzers.Completion.Support
     {
         public IEnumerable<CompletionItem> Build(string identifierSoFar, IReadOnlyList<IPropertySymbol> properties, string lastOperator)
         {
-            foreach (var junction in new[] { "And", "Or" })
+            foreach (var junction in new[] { "And", "Or", "OrderBy" })
             {
                 var displayText = identifierSoFar + junction;
                 yield return CompletionItem.Create(
