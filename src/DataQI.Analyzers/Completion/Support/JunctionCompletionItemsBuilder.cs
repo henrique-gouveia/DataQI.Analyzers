@@ -16,7 +16,7 @@ namespace DataQI.Analyzers.Completion.Support
                 var displayText = identifierSoFar + junction;
                 yield return CompletionItem.Create(
                     displayText: displayText,
-                    sortText: "0000_" + displayText,
+                    sortText: $"0000_{displayText}",
                     tags: ImmutableArray.Create(WellKnownTags.Keyword));
             }
         }

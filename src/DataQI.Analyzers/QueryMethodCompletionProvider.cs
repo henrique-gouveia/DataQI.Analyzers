@@ -1,11 +1,9 @@
-using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Text;
@@ -96,7 +94,7 @@ namespace DataQI.Analyzers
             }
             catch
             {
-                // PoC: swallow — never let a provider exception break the editor's completion list.
+                // swallow: never let a provider exception break the editor's completion list.
             }
         }
 

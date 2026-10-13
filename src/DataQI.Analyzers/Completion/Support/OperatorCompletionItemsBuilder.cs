@@ -28,7 +28,7 @@ namespace DataQI.Analyzers.Completion.Support
                 var argCount = QueryOperators.ArgumentCounts.TryGetValue(op, out var count) ? count : 1;
                 return CompletionItem.Create(
                     displayText: displayText,
-                    sortText: "0000_" + displayText,
+                    sortText: $"0000_{displayText}",
                     inlineDescription: $"{argCount} arg(s)",
                     tags: ImmutableArray.Create(WellKnownTags.Keyword));
             });
