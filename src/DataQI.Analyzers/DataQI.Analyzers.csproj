@@ -2,26 +2,27 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.0.0-preview</Version>
+    <Nullable>disable</Nullable>
+    <Version>0.1.0-poc.1</Version>
     <Authors>Henrique Gouveia</Authors>
-    <Description>Data Query Interface Analyzers is written in C# and provides Roslyn analyzers and code fixes that enforce conventions shared across every DataQI Provider.</Description>
+    <Description>Data Query Interface Analyzers provides a Roslyn CompletionProvider that suggests DataQI query-method names inside repository interfaces.</Description>
     <Copyright>(c) Henrique Gouveia</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/henrique-gouveia/DataQI.Analyzers</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>Data Query Interface Analyzers</PackageTags>
+    <PackageTags>Data Query Interface Analyzers Completion</PackageTags>
     <PackageProjectUrl>https://github.com/henrique-gouveia/DataQI.Analyzers</PackageProjectUrl>
     <Product />
-    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.8.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
 </Project>
