@@ -68,7 +68,7 @@ namespace DataQI.Analyzers
                     return;
                 }
 
-                var properties = resolver.GetPublicInstanceProperties(entityType);
+                var properties = resolver.GetQueryableProperties(entityType);
                 var propertyNames = properties.Select(p => p.Name).ToList();
 
                 var tokens = tokenizer.Tokenize(identifierText, propertyNames);
