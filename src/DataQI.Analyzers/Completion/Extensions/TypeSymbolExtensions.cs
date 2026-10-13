@@ -24,7 +24,9 @@ namespace DataQI.Analyzers.Completion.Extensions
 
             if (underlying.SpecialType == SpecialType.System_String)
                 operators.AddRange(new[] { "Not", "StartingWith", "EndingWith", "Containing", "Like", "In", "NotIn" });
-            else if (underlying.Name == "Guid")
+            else if (underlying.Name == "Guid"
+                && underlying.TypeKind == TypeKind.Struct
+                && underlying.ContainingNamespace?.ToDisplayString() == "System")
                 operators.AddRange(new[] { "Not", "In", "NotIn" });
             else if (underlying.TypeKind == TypeKind.Enum || OrderedTypeNames.Contains(underlying.Name))
                 operators.AddRange(new[]

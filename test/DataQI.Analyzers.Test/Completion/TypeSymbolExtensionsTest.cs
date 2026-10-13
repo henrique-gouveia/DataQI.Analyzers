@@ -96,6 +96,21 @@ public class Fixture {{ public {classBody} Value {{ get; set; }} }}";
             Assert.DoesNotContain("Null", operators);
         }
 
+        [Fact]
+        public void TestSuggestsEnumOperatorsForUserEnumNamedGuid()
+        {
+            var compilation = TestSymbols.Compile(@"
+public enum Guid { First, Second }
+public class Holder { public Guid Value { get; set; } }");
+            var type = compilation.GetTypeByMetadataName("Holder")
+                .GetMembers("Value").OfType<IPropertySymbol>().Single().Type;
+
+            var operators = type.GetSuggestedOperators();
+
+            Assert.Contains("GreaterThan", operators);
+            Assert.Contains("Between", operators);
+        }
+
         [Theory]
         [InlineData("int", true)]
         [InlineData("int?", true)]
