@@ -37,6 +37,13 @@ namespace DataQI.Analyzers.Test.Query
             Assert.False(PropertySafety.IsSafe(name, PropertySafetyContext.OrderBy));
         }
 
+        [Fact]
+        public void TestRejectsNamesStartingWithLowercaseInBothContexts()
+        {
+            Assert.False(PropertySafety.IsSafe("name", PropertySafetyContext.Predicate));
+            Assert.False(PropertySafety.IsSafe("name", PropertySafetyContext.OrderBy));
+        }
+
         [Theory]
         [InlineData("Name")]
         [InlineData("CreatedBy")]

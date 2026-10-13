@@ -34,6 +34,10 @@ namespace DataQI.Analyzers.Query
         {
             Assert.NotNullOrEmpty(propertyName, "Property name must not be null or empty");
 
+            // QueryMethodParser recognizes the By prefix only before an ASCII uppercase letter.
+            if (propertyName[0] < 'A' || propertyName[0] > 'Z')
+                return false;
+
             var probe = $"{propertyName}{Continuation}";
 
             if (EndsWithReservedWord(propertyName) || OrderByMatcher.IsMatch(probe))
