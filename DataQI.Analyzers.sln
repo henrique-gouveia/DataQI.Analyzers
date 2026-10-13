@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{5D20
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompletionSample", "samples\CompletionSample\CompletionSample.csproj", "{F57DD607-A4E3-49F7-A6E3-489A17C2D3C9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataQI.Analyzers.Parity.Test", "test\DataQI.Analyzers.Parity.Test\DataQI.Analyzers.Parity.Test.csproj", "{78180FFA-E134-456E-B030-BD46EE27F387}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,18 @@ Global
 		{F57DD607-A4E3-49F7-A6E3-489A17C2D3C9}.Release|x64.Build.0 = Release|Any CPU
 		{F57DD607-A4E3-49F7-A6E3-489A17C2D3C9}.Release|x86.ActiveCfg = Release|Any CPU
 		{F57DD607-A4E3-49F7-A6E3-489A17C2D3C9}.Release|x86.Build.0 = Release|Any CPU
+		{78180FFA-E134-456E-B030-BD46EE27F387}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78180FFA-E134-456E-B030-BD46EE27F387}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78180FFA-E134-456E-B030-BD46EE27F387}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{78180FFA-E134-456E-B030-BD46EE27F387}.Debug|x64.Build.0 = Debug|Any CPU
+		{78180FFA-E134-456E-B030-BD46EE27F387}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{78180FFA-E134-456E-B030-BD46EE27F387}.Debug|x86.Build.0 = Debug|Any CPU
+		{78180FFA-E134-456E-B030-BD46EE27F387}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78180FFA-E134-456E-B030-BD46EE27F387}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78180FFA-E134-456E-B030-BD46EE27F387}.Release|x64.ActiveCfg = Release|Any CPU
+		{78180FFA-E134-456E-B030-BD46EE27F387}.Release|x64.Build.0 = Release|Any CPU
+		{78180FFA-E134-456E-B030-BD46EE27F387}.Release|x86.ActiveCfg = Release|Any CPU
+		{78180FFA-E134-456E-B030-BD46EE27F387}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -69,5 +83,6 @@ Global
 		{0958BE1D-A196-4EEE-80E1-72CEC478E5DA} = {506305A0-8C4F-489D-9E02-8F0E021D90EF}
 		{70976C3B-608B-41B5-8BE7-A57643D49508} = {933A2059-8A98-412C-8440-92F6AADC4D21}
 		{F57DD607-A4E3-49F7-A6E3-489A17C2D3C9} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{78180FFA-E134-456E-B030-BD46EE27F387} = {933A2059-8A98-412C-8440-92F6AADC4D21}
 	EndGlobalSection
 EndGlobal
