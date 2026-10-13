@@ -86,12 +86,13 @@ public class Fixture {{ public {classBody} Value {{ get; set; }} }}";
         }
 
         [Fact]
-        public void TestSuggestsComparisonOperatorsForGuid()
+        public void TestDoesNotSuggestOrderingOperatorsForGuid()
         {
             var operators = GetTypeOfFirstProperty("Guid").GetSuggestedOperators();
 
-            Assert.Contains("GreaterThan", operators);
-            Assert.Contains("Between", operators);
+            Assert.DoesNotContain("GreaterThan", operators);
+            Assert.DoesNotContain("Between", operators);
+            Assert.Contains("In", operators);
             Assert.DoesNotContain("Null", operators);
         }
 
