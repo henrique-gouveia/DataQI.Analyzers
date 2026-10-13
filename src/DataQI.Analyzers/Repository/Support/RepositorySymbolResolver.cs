@@ -59,10 +59,10 @@ namespace DataQI.Analyzers.Repository.Support
 
             for (var current = entityType; current != null; current = current.BaseType)
             {
-                foreach (var property in current.GetMembers().OfType<IPropertySymbol>().Where(IsQueryable))
+                foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
                 {
                     // Walking from the most derived type, the first occurrence of a name wins.
-                    if (names.Add(property.Name))
+                    if (names.Add(property.Name) && IsQueryable(property))
                         properties.Add(property);
                 }
             }

@@ -208,6 +208,20 @@ public class Derived : Base { public new int Name { get; set; } }", "Derived");
             Assert.Equal(SpecialType.System_Int32, name.Type.SpecialType);
         }
 
+        [Theory]
+        [InlineData("public new List<string> Name { get; set; }")]
+        [InlineData("[NotMapped] public new string Name { get; set; }")]
+        public void TestHiddenUnqueryablePropertySuppressesBaseProperty(string declaration)
+        {
+            var type = TypeOf($@"
+public class Base {{ public string Name {{ get; set; }} public int Id {{ get; set; }} }}
+public class Derived : Base {{ {declaration} }}", "Derived");
+
+            var names = queryableResolver.GetQueryableProperties(type).Select(p => p.Name).ToList();
+
+            Assert.Equal(new[] { "Id" }, names);
+        }
+
         [Fact]
         public void TestReturnsNoPropertiesForEntityWithoutScalars()
         {
