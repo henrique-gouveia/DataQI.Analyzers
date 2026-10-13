@@ -82,11 +82,13 @@ Decision: finish the 7 scenarios in VS Code first, then run an equivalent pass i
 ## 2026-10-13: 0.1.0-preview.1 validation
 
 - Branch: `feature/complete-first-version`
-- Package: `feed/DataQI.Analyzers.0.1.0-preview.1.nupkg` (repacked after the partial-name filter)
+- Package: `feed/DataQI.Analyzers.0.1.0-preview.1.nupkg` (repacked after the final review corrections)
 - Environment: VS Code CLI 1.134.0; .NET SDK 10.0.103. The VS Code C# extension and C# Dev Kit are not installed in this profile.
-- Automated Roslyn completion tests: 187 passed, 0 failed. Runtime parity tests: 10 passed, 0 failed.
+- Analyzer unit tests: 191 passed, 0 failed. Runtime parity tests: 10 passed, 0 failed. Release build: 0 warnings, 0 errors.
 - `FindByNa` filter: a `CompletionService` regression test first returned `FindById` and failed; after filtering, the matching, missing, multiple-property, and partial-operator tests passed.
 - Sample: forced restore from the local feed and `dotnet build --no-restore` succeeded with 0 warnings and 0 errors.
+- Clean solution restore against nuget.org only succeeded after keeping the unpublished sample package out of the solution. The sample remains buildable separately from the local feed.
+- The package DLL and the freshly restored analyzer DLL have the same SHA-256 as the Release build: `89c0292f36c533073d7f0fdd7feae7779f0e306c6afbd5fcaa2fc951b08a7981`.
 
 | Manual VS Code scenario from `VALIDATION.md` | Result |
 |---|---|
