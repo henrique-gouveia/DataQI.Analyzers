@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DataQI.EntityFrameworkCore" Version="5.0.0" />
-    <PackageReference Include="DataQI.Analyzers" Version="0.1.0-poc.3" />
+    <PackageReference Include="DataQI.EntityFrameworkCore" Version="6.0.0-preview.1" />
+    <PackageReference Include="DataQI.Analyzers" Version="0.1.0-preview.1" />
   </ItemGroup>
 
 </Project>

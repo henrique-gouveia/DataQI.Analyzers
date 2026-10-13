@@ -1,6 +1,6 @@
 /.vs
 /.vscode
-/.idea
+.idea/
 /packages
 bin
 obj
@@ -9,3 +9,5 @@ lib
 *.nupkg
 *.suo
 *.nuspec
+feed/
+samples/**/nuget.config
