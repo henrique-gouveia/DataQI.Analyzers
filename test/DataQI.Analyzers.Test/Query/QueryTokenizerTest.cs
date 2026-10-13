@@ -229,5 +229,67 @@ namespace DataQI.Analyzers.Test.Query
             Assert.Equal(4, propertyToken.Length);
             Assert.Equal("Name", "FindByName".Substring(propertyToken.Start, propertyToken.Length));
         }
+
+        [Fact]
+        public void TestTokenizesOrderByAfterACondition()
+        {
+            var tokens = tokenizer.Tokenize("FindByNameOrderByAge", BaseProperties);
+
+            Assert.Collection(tokens,
+                t => Assert.Equal(QueryTokenKind.Prefix, t.Kind),
+                t => Assert.Equal(QueryTokenKind.Property, t.Kind),
+                t => Assert.Equal(QueryTokenKind.OrderBy, t.Kind),
+                t => { Assert.Equal(QueryTokenKind.Property, t.Kind); Assert.Equal("Age", t.Text); });
+        }
+
+        [Fact]
+        public void TestTokenizesDirectionsAndSeveralOrderProperties()
+        {
+            var tokens = tokenizer.Tokenize("FindByNameEqualOrderByAgeDescStockAsc", BaseProperties);
+
+            Assert.Equal(
+                new[]
+                {
+                    QueryTokenKind.Prefix, QueryTokenKind.Property, QueryTokenKind.Operator, QueryTokenKind.OrderBy,
+                    QueryTokenKind.Property, QueryTokenKind.Direction, QueryTokenKind.Property, QueryTokenKind.Direction
+                },
+                tokens.Select(t => t.Kind).ToArray());
+            Assert.Equal("Desc", tokens[5].Text);
+            Assert.Equal("Asc", tokens[7].Text);
+        }
+
+        [Fact]
+        public void TestDoesNotRecognizeOrderByBeforeAnyCondition()
+        {
+            var tokens = tokenizer.Tokenize("FindByOrderByName", BaseProperties);
+
+            Assert.DoesNotContain(tokens, t => t.Kind == QueryTokenKind.OrderBy);
+        }
+
+        [Fact]
+        public void TestDoesNotRecognizeJunctionsOrOperatorsAfterOrderBy()
+        {
+            var tokens = tokenizer.Tokenize("FindByNameOrderByAgeAnd", BaseProperties);
+
+            Assert.DoesNotContain(tokens, t => t.Kind == QueryTokenKind.Junction);
+            Assert.Equal(QueryTokenKind.Incomplete, tokens[tokens.Count - 1].Kind);
+        }
+
+        [Fact]
+        public void TestReadsDirectionBeforeAPropertyNamedLikeIt()
+        {
+            var tokens = tokenizer.Tokenize("FindByNameOrderByAgeDesc", new[] { "Name", "Age", "Desc" });
+
+            Assert.Equal(QueryTokenKind.Direction, tokens[tokens.Count - 1].Kind);
+        }
+
+        [Fact]
+        public void TestDoesNotReadDirectionInsideALongerWord()
+        {
+            var tokens = tokenizer.Tokenize("FindByNameOrderByDescription", new[] { "Name", "Description" });
+
+            Assert.DoesNotContain(tokens, t => t.Kind == QueryTokenKind.Direction);
+            Assert.Equal("Description", tokens[tokens.Count - 1].Text);
+        }
     }
 }

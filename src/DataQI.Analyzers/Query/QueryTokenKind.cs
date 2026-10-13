@@ -7,6 +7,8 @@ namespace DataQI.Analyzers.Query
         Not,
         Operator,
         Junction,
+        OrderBy,
+        Direction,
         AsyncSuffix,
         Incomplete
     }
