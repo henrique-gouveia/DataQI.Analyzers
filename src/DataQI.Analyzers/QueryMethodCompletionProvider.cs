@@ -102,7 +102,11 @@ namespace DataQI.Analyzers
                     || builderToken.Kind == QueryTokenKind.Direction;
 
                 foreach (var item in builder.Build(identifierSoFar, offersProperties ? suggestible : propertiesUsedSoFar, null))
-                    context.AddItem(item);
+                {
+                    if (lastToken.Kind != QueryTokenKind.Incomplete
+                        || item.DisplayText.StartsWith(identifierText, StringComparison.OrdinalIgnoreCase))
+                        context.AddItem(item);
+                }
             }
             catch
             {

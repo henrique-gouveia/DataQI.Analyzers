@@ -24,6 +24,57 @@ namespace DataQI.Analyzers.Test
         }
 
         [Fact]
+        public async Task TestFiltersUnrelatedPropertiesForPartialName()
+        {
+            var completions = await CompleteMemberAsync("FindByNa", 'a');
+
+            Assert.Contains(completions.ItemsList, item => item.DisplayText == "FindByName");
+            Assert.DoesNotContain(completions.ItemsList, item => item.DisplayText == "FindById");
+        }
+
+        [Fact]
+        public async Task TestKeepsMultipleMatchingPropertiesForPartialName()
+        {
+            var body = @"
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Nickname { get; set; }
+    }
+    public interface IProductRepository : DataQI.Commons.Repository.ICrudRepository<Product, int>
+    {
+        IEnumerable<Product> FindByN$$
+    }";
+
+            var completions = await CompletionTestHost.CompleteAsync(
+                body, CompletionTrigger.CreateInsertionTrigger('N'), true);
+
+            Assert.Contains(completions.ItemsList, item => item.DisplayText == "FindByName");
+            Assert.Contains(completions.ItemsList, item => item.DisplayText == "FindByNickname");
+            Assert.DoesNotContain(completions.ItemsList, item => item.DisplayText == "FindById");
+        }
+
+        [Fact]
+        public async Task TestOffersNoDataQIItemForAnUnmatchedPartialName()
+        {
+            var positive = await CompleteMemberAsync("FindByNa", 'a');
+            var missing = await CompleteMemberAsync("FindByZz", 'z', false);
+
+            Assert.Contains(positive.ItemsList, item => item.DisplayText == "FindByName");
+            Assert.DoesNotContain(missing.ItemsList, CompletionTestHost.IsDataQIItem);
+        }
+
+        [Fact]
+        public async Task TestFiltersPartialOperatorName()
+        {
+            var completions = await CompleteMemberAsync("FindByNameSta", 'a');
+
+            Assert.Contains(completions.ItemsList, item => item.DisplayText == "FindByNameStartingWith");
+            Assert.DoesNotContain(completions.ItemsList, item => item.DisplayText == "FindByNameOrderBy");
+        }
+
+        [Fact]
         public async Task TestSuggestsOrderByAfterAnOperator()
         {
             var completions = await CompleteMemberAsync("FindByNameStartingWith", 'h');
