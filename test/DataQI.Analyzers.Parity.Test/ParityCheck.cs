@@ -14,10 +14,6 @@ namespace DataQI.Analyzers.Parity.Test
     {
         private static readonly QueryTokenizer Tokenizer = new QueryTokenizer();
 
-        /// <summary>
-        /// True when the runtime reads the name exactly as the tokenizer does (property, criterion type, negation,
-        /// direction). A name the runtime rejects with an exception counts as a mismatch.
-        /// </summary>
         public static bool Matches(string name, IReadOnlyCollection<string> propertyNames, MethodInfo method)
         {
             var expected = ExpectedQuery.From(Tokenizer.Tokenize(name, propertyNames));

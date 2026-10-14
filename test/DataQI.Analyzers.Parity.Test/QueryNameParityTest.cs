@@ -97,8 +97,7 @@ namespace DataQI.Analyzers.Parity.Test
         [Fact]
         public void TestTwoOrderPropertiesWithoutADirectionAreReadAsOneProperty()
         {
-            // The reason the completion offers only Asc/Desc after an ordered property: the runtime reads
-            // OrderByAgeName as the single property AgeName.
+            // Completion must offer Asc/Desc here to keep adjacent order properties distinct.
             var failures = ParityCheck.Failures(new[] { "FindByNameOrderByAgeName" }, Anchors);
 
             Assert.NotEmpty(failures);

@@ -11,7 +11,6 @@ namespace DataQI.Analyzers.Parity.Test
         public string Orders { get; private set; }
         public object[] Values { get; private set; }
 
-        /// <summary>Returns null when the tokenizer did not fully understand the name.</summary>
         public static ExpectedQuery From(IReadOnlyList<QueryToken> tokens)
         {
             var groups = new List<List<string>> { new List<string>() };
@@ -83,7 +82,6 @@ namespace DataQI.Analyzers.Parity.Test
             };
         }
 
-        // Arity table: Between takes two values, In an object[], Null none, text operators a string, the rest one value.
         private static string Describe(string property, string op, bool negated, List<object> values)
         {
             string criterion;

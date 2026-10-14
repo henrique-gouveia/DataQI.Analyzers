@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace DataQI.Analyzers.Parity.Test
 {
-    /// <summary>QueryMethodParser.Parse(MethodInfo) only reads the method name, so an emitted interface is enough.</summary>
+    // The runtime parser only reads method names, so emitted interfaces need no implementation.
     internal static class RuntimeMethods
     {
         private static readonly object Gate = new object();
