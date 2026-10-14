@@ -19,6 +19,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.8.0" PrivateAssets="all" />
+    <!-- Override Roslyn's vulnerable System.Text.Json 7.0.3 in the build dependency graph (CVE-2024-30105). -->
+    <PackageReference Include="System.Text.Json" Version="10.0.13" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
