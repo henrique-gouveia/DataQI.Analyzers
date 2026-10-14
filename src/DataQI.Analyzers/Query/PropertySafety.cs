@@ -7,7 +7,7 @@ using DataQI.Analyzers.Util;
 namespace DataQI.Analyzers.Query
 {
     /// <summary>
-    /// Tells whether the runtime (QueryMethodParser, DataQI.Commons 4.0) reads a property name back as the same
+    /// Tells whether the runtime (QueryMethodParser, DataQI.Commons 4.0, or later) reads a property name back as the same
     /// property. The expressions mirror the parser's; the parity test keeps them in sync.
     /// The parser sees the property followed by the next token, so the name is evaluated with an uppercase
     /// continuation. The function is conservative on purpose: it may reject a harmless name, never accept a harmful one.
@@ -48,8 +48,6 @@ namespace DataQI.Analyzers.Query
                 : IsSafeInPredicate(propertyName, probe);
         }
 
-        // Each of these can combine with the next token of the method name (ItemIs + Null reads as IsNull on Item,
-        // SalesAnd + Equal splits at And), in the predicate and after OrderBy alike. Async is always stripped.
         private static bool EndsWithReservedWord(string propertyName)
             => ReservedEndings.Any(ending => propertyName.EndsWith(ending, StringComparison.Ordinal));
 
