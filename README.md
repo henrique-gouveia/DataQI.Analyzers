@@ -18,6 +18,12 @@ Add the package directly to the project containing your repository interfaces:
 
 For a locally built preview, add the directory containing the `.nupkg` to your NuGet sources before restoring. The provider requires an IDE host with Roslyn 4.8 or newer.
 
+## Framework Compatibility
+
+The library targets only `netstandard2.0`. Roslyn dependencies stay at 4.8.0 to preserve compatibility with IDE hosts using Roslyn 4.8; they are provided by the host and are not shipped as package dependencies.
+
+Tests target only `net10.0`. Development requires the .NET 10 SDK.
+
 ## Editor Setup
 
 - **Rider 2025.2+:** open `Settings → Editor → Inspection Settings → Roslyn` and enable **Enable Roslyn analyzers** and **Always Prefer Roslyn Completions**. The latter enables third-party completion providers ([RIDER-74403](https://youtrack.jetbrains.com/issue/RIDER-74403)).
