@@ -1,6 +1,6 @@
 # DataQI Analyzers
 
-DataQI.Analyzers 0.1 suggests `FindBy...` query-method names while repository interfaces are edited. It is a Roslyn completion provider for repositories built on DataQI.Commons 4.0; it does not provide diagnostics or code fixes.
+DataQI.Analyzers suggests `FindBy...` query-method names while you edit DataQI repository interfaces. It completes properties, operators, logical junctions, and ordering based on the entity type.
 
 [![Build](https://github.com/henrique-gouveia/DataQI.Analyzers/actions/workflows/dotnet.yml/badge.svg)](https://github.com/henrique-gouveia/DataQI.Analyzers/actions/workflows/dotnet.yml)
 [![codecov](https://codecov.io/gh/henrique-gouveia/DataQI.Analyzers/branch/main/graph/badge.svg)](https://codecov.io/gh/henrique-gouveia/DataQI.Analyzers)
@@ -8,23 +8,33 @@ DataQI.Analyzers 0.1 suggests `FindBy...` query-method names while repository in
 
 ## Install
 
-`DataQI.Commons` 4.0.0-preview.2 brings `DataQI.Analyzers` 0.1.0-preview.2 as a transitive analyzer dependency. Reference Commons alone to receive the completion provider. The host needs Roslyn 4.8 or newer: .NET SDK 8 or Visual Studio 17.8+.
+Add the package directly to the project containing your repository interfaces:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="DataQI.Commons" Version="4.0.0-preview.2" />
+  <PackageReference Include="DataQI.Analyzers" Version="0.1.0-preview.2" PrivateAssets="all" />
 </ItemGroup>
 ```
 
-## Example
+For a locally built preview, add the directory containing the `.nupkg` to your NuGet sources before restoring. The provider requires an IDE host with Roslyn 4.8 or newer.
+
+## Editor Setup
+
+- **Rider 2025.2+:** open `Settings → Editor → Inspection Settings → Roslyn` and enable **Enable Roslyn analyzers** and **Always Prefer Roslyn Completions**. The latter enables third-party completion providers ([RIDER-74403](https://youtrack.jetbrains.com/issue/RIDER-74403)).
+- **VS Code:** install the C# extension (`ms-dotnettools.csharp`) and wait for the project to load. C# Dev Kit is optional.
+- **Visual Studio 17.8+:** meets the Roslyn requirement; editor behavior has not been verified.
+
+## Usage
 
 Inside an interface that inherits directly or indirectly from `ICrudRepository<TEntity, TId>`, type the first letter of a member name after its return type. Completion offers `FindBy`, then public scalar properties, operators compatible with each property, `And`/`Or`, and `OrderBy` with `Asc`/`Desc`. Ctrl+Space after the return type also offers `FindBy`.
+
+For example, in a project already using the Entity Framework Core provider:
 
 ```csharp
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using DataQI.Commons.Repository;
+using DataQI.EntityFrameworkCore.Repository;
 
 public class Product
 {
@@ -33,8 +43,10 @@ public class Product
     public decimal Price { get; set; }
 }
 
-public interface IProductRepository : ICrudRepository<Product, int>
+public interface IProductRepository : IEntityRepository<Product, int>
 {
+    IEnumerable<Product> FindByNameEqual(string name);
+
     IEnumerable<Product> FindByNameStartingWithAndPriceGreaterThan(string name, decimal price);
 
     Task<IEnumerable<Product>> FindByNameOrderByPriceDescAsync(
@@ -45,29 +57,50 @@ public interface IProductRepository : ICrudRepository<Product, int>
 
 For async repository methods, use the `Async` suffix and a trailing `CancellationToken` when the repository API supports it.
 
-Completion offers `Equal` for explicit equality on every supported scalar type, even though `FindByName` already means equality. For example, it suggests `FindByNameEqual`. The equivalent aliases `Equals`, `IsEqual`, and `IsEquals` are recognized when typed; suggestions use the canonical form `Equal`.
+### Suggested Operators
 
-## Build and Pack
+Every supported scalar type offers `Equal` and `Not`. Additional suggestions depend on its type:
 
-```bash
-dotnet build DataQI.Analyzers.sln
-dotnet test DataQI.Analyzers.sln
-./pack.sh 0.1.0-preview.2
-```
+| Property type | Additional operators |
+|---|---|
+| `string` | `StartingWith`, `EndingWith`, `Containing`, `Like`, `In`, `NotIn` |
+| Numeric types, `DateTime`, `DateTimeOffset`, `TimeSpan`, enums | `GreaterThan`, `GreaterThanEqual`, `LessThan`, `LessThanEqual`, `Between`, `NotBetween`, `In`, `NotIn` |
+| `Guid` | `In`, `NotIn` |
+| `bool`, `char`, `byte[]` | None beyond equality and negation |
 
-The package is written to `feed/`; the completion provider assembly is placed under `analyzers/dotnet/cs` and Roslyn dependencies are supplied by the IDE host. NuGet caches restored versions, so clear only the exact cached version if repacking the same local version.
+Reference types and nullable value types also offer `Null` and `NotNull`.
 
-`samples/CompletionSample` references only `DataQI.Commons 4.0.0-preview.2`. For local testing, its feed must contain both the Commons and Analyzer preview.2 packages; the Analyzer is restored transitively.
+Equality can be implicit (`FindByName`) or explicit (`FindByNameEqual`). The aliases `Equals`, `IsEqual`, and `IsEquals` are also recognized when typed; suggestions use the canonical form `Equal`. The same convention applies to aliases such as `Contains` and `IsContaining`: completion suggests `Containing`.
 
-## Validate in VS Code
+### Ordering and Continuing a Query
 
-Follow [VALIDATION.md](VALIDATION.md) to restore the sample from the local feed and run the scenarios with the C# extension. The earlier PoC was checked in VS Code and Rider. Manual popup validation of this 0.1 preview is recorded as pending in [validation-results.md](validation-results.md); Visual Studio remains unverified. Rider 2025.2+ requires **Always Prefer Roslyn Completions** under `Editor → Inspection Settings → Roslyn`.
+After a property or operator, completion offers `And`, `Or`, and `OrderBy`. After an ordered property, it offers `Asc` and `Desc`; after a direction, it offers the next property. For example: `FindByNameOrderByPriceDescIdAsc`.
+
+The editor may close the list when you accept an item. Continue typing the next part or press Ctrl+Space to request the next suggestions. Reopening the list immediately after acceptance depends on the editor.
 
 ## Known Limitations
 
-- Only public scalar properties are offered: primitives, `string`, `decimal`, `char`, `DateTime`, `DateTimeOffset`, `TimeSpan`, `Guid`, `byte[]`, enums, and nullable forms. Navigation properties, collections, indexers, and `[NotMapped]` properties are excluded.
-- Names the Commons runtime would misread are not suggested. Examples include `InStock`, `LinkedIn`, `LikeCount`, `TermsAndConditions`, and names ending in `Async`, `Is`, `Not`, `And`, or `Or`. Such names can still be typed by hand, but the runtime will not read them as intended. A future diagnostic is planned for this case.
+- Only public instance scalar properties with public getters are offered, including inherited properties: primitives, `string`, `decimal`, `char`, `DateTime`, `DateTimeOffset`, `TimeSpan`, `Guid`, `byte[]`, enums, and nullable forms. Navigation properties, collections, indexers, and `[NotMapped]` properties are excluded.
+- Property names must start with an ASCII uppercase letter. Names that overlap query keywords are filtered conservatively, including `InStock`, `LinkedIn`, `LikeCount`, `TermsAndConditions`, and names ending in `Async`, `Is`, `Not`, `And`, or `Or`.
 - Only `FindBy` is completed. Diagnostics, code fixes, other prefixes, and return-type and parameter completion are outside 0.1.
+
+## Troubleshooting
+
+If the suggestions do not appear, confirm that the package has been restored in the project containing the repository interface and that the IDE has finished loading it. In Rider, check **Always Prefer Roslyn Completions** first.
+
+When testing a repacked local version, remove only that exact version from NuGet's global cache, restore again, and reload the project or restart the IDE. The package must contain `analyzers/dotnet/cs/DataQI.Analyzers.dll`. Check build output for `CS8032` or `AD0001` if the provider fails to load.
+
+## Build and Pack
+
+Building and running the tests requires the .NET 10 SDK.
+
+```bash
+dotnet build DataQI.Analyzers.sln --configuration Release
+dotnet test DataQI.Analyzers.sln --configuration Release --no-build
+./pack.sh 0.1.0-preview.2
+```
+
+The package is written to `feed/`. The IDE supplies the Roslyn dependencies; they are not bundled in the package.
 
 ## License
 

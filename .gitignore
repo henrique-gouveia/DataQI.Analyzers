@@ -10,4 +10,3 @@ lib
 *.suo
 *.nuspec
 feed/
-samples/**/nuget.config
