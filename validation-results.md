@@ -100,3 +100,12 @@ Decision: finish the 7 scenarios in VS Code first, then run an equivalent pass i
 | Indirect repository inheritance | Pending: popup not observed |
 
 The macOS UI automation attempt did not return control of the editor. The C# extensions must be installed and the cases rerun in an interactive VS Code session before reporting this preview as editor-validated.
+
+## 2026-10-14: Explicit equality suggestions
+
+- Added `Equal` to the suggested operators for every supported scalar type. Equality remains available without a suffix, and typed aliases `Equals`, `IsEqual`, and `IsEquals` remain supported.
+- Red: 19 regression cases failed because the explicit equality suggestion was missing (15 scalar types and 4 Roslyn completion scenarios, including partial `...E` identifiers).
+- Green: 210 Analyzer unit tests and 10 runtime parity tests passed. Release build of the full solution, including the sample: 0 warnings, 0 errors.
+- Repacked `0.1.0-preview.1` to the workspace `packages/` directory and refreshed `feed/`. Moved only the exact cached Analyzer version, then force-restored the solution with the workspace `NuGet.Config`.
+- Release, package, and restored analyzer DLLs share SHA-256 `65cd443a5d63783f2022d182a2baabdc721f0e7bd68b1f3ec54976cc5cdc13c8`.
+- Rider popup observation of this correction remains pending.

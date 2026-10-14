@@ -20,7 +20,7 @@ namespace DataQI.Analyzers.Completion.Extensions
         public static IReadOnlyList<string> GetSuggestedOperators(this ITypeSymbol type)
         {
             var underlying = Unwrap(type, out var isNullable);
-            var operators = new List<string>();
+            var operators = new List<string> { "Equal" };
 
             if (underlying.SpecialType == SpecialType.System_String)
                 operators.AddRange(new[] { "Not", "StartingWith", "EndingWith", "Containing", "Like", "In", "NotIn" });

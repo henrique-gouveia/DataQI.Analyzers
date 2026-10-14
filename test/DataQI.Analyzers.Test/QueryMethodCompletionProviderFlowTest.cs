@@ -14,6 +14,19 @@ namespace DataQI.Analyzers.Test
                 CompletionTrigger.CreateInsertionTrigger(inserted),
                 expectItem);
 
+        [Theory]
+        [InlineData("FindByName", 'e', "FindByNameEqual")]
+        [InlineData("FindById", 'd', "FindByIdEqual")]
+        [InlineData("FindByNameE", 'E', "FindByNameEqual")]
+        [InlineData("FindByIdE", 'E', "FindByIdEqual")]
+        public async Task TestSuggestsExplicitEquality(string member, char inserted, string expected)
+        {
+            var completions = await CompleteMemberAsync(member, inserted);
+
+            var item = Assert.Single(completions.ItemsList, item => item.DisplayText == expected);
+            Assert.Equal("1 arg(s)", item.InlineDescription);
+        }
+
         [Fact]
         public async Task TestSuggestsOrderByAfterAProperty()
         {

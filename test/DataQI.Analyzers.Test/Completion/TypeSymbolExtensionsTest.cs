@@ -62,7 +62,7 @@ public class Fixture {{ public {classBody} Value {{ get; set; }} }}";
         {
             var operators = GetTypeOfFirstProperty("bool").GetSuggestedOperators();
 
-            Assert.Equal(new[] { "Not" }, operators);
+            Assert.Equal(new[] { "Equal", "Not" }, operators);
         }
 
         [Fact]

@@ -11,11 +11,32 @@ namespace DataQI.Analyzers.Test.Completion
         private static string[] OperatorsOf(string typeName)
             => TestSymbols.Property(typeName).Type.GetSuggestedOperators().ToArray();
 
+        [Theory]
+        [InlineData("string")]
+        [InlineData("bool")]
+        [InlineData("bool?")]
+        [InlineData("char")]
+        [InlineData("char?")]
+        [InlineData("byte[]")]
+        [InlineData("Guid")]
+        [InlineData("Guid?")]
+        [InlineData("int")]
+        [InlineData("int?")]
+        [InlineData("DateTime")]
+        [InlineData("DateTimeOffset?")]
+        [InlineData("TimeSpan")]
+        [InlineData("Color")]
+        [InlineData("Color?")]
+        public void TestEveryScalarSuggestsExplicitEquality(string typeName)
+        {
+            Assert.Single(OperatorsOf(typeName), op => op == "Equal");
+        }
+
         [Fact]
         public void TestStringGetsTextOperatorsAndNullChecks()
         {
             Assert.Equal(
-                new[] { "Not", "StartingWith", "EndingWith", "Containing", "Like", "In", "NotIn", "Null", "NotNull" },
+                new[] { "Equal", "Not", "StartingWith", "EndingWith", "Containing", "Like", "In", "NotIn", "Null", "NotNull" },
                 OperatorsOf("string"));
         }
 
@@ -28,7 +49,7 @@ namespace DataQI.Analyzers.Test.Completion
         public void TestOrderedTypesGetComparisonOperatorsWithoutNullChecks(string typeName)
         {
             Assert.Equal(
-                new[] { "Not", "GreaterThan", "GreaterThanEqual", "LessThan", "LessThanEqual", "Between", "NotBetween", "In", "NotIn" },
+                new[] { "Equal", "Not", "GreaterThan", "GreaterThanEqual", "LessThan", "LessThanEqual", "Between", "NotBetween", "In", "NotIn" },
                 OperatorsOf(typeName));
         }
 
@@ -45,28 +66,28 @@ namespace DataQI.Analyzers.Test.Completion
         }
 
         [Fact]
-        public void TestBoolGetsOnlyNot()
+        public void TestBoolGetsEqualityOperators()
         {
-            Assert.Equal(new[] { "Not" }, OperatorsOf("bool"));
+            Assert.Equal(new[] { "Equal", "Not" }, OperatorsOf("bool"));
         }
 
         [Fact]
         public void TestNullableBoolGetsNullChecks()
         {
-            Assert.Equal(new[] { "Not", "Null", "NotNull" }, OperatorsOf("bool?"));
+            Assert.Equal(new[] { "Equal", "Not", "Null", "NotNull" }, OperatorsOf("bool?"));
         }
 
         [Fact]
         public void TestGuidHasNoOrderingOperators()
         {
-            Assert.Equal(new[] { "Not", "In", "NotIn" }, OperatorsOf("Guid"));
-            Assert.Equal(new[] { "Not", "In", "NotIn", "Null", "NotNull" }, OperatorsOf("Guid?"));
+            Assert.Equal(new[] { "Equal", "Not", "In", "NotIn" }, OperatorsOf("Guid"));
+            Assert.Equal(new[] { "Equal", "Not", "In", "NotIn", "Null", "NotNull" }, OperatorsOf("Guid?"));
         }
 
         [Theory]
-        [InlineData("char", new[] { "Not" })]
-        [InlineData("char?", new[] { "Not", "Null", "NotNull" })]
-        [InlineData("byte[]", new[] { "Not", "Null", "NotNull" })]
+        [InlineData("char", new[] { "Equal", "Not" })]
+        [InlineData("char?", new[] { "Equal", "Not", "Null", "NotNull" })]
+        [InlineData("byte[]", new[] { "Equal", "Not", "Null", "NotNull" })]
         public void TestOtherScalarsGetEqualityOnly(string typeName, string[] expected)
         {
             Assert.Equal(expected, OperatorsOf(typeName));

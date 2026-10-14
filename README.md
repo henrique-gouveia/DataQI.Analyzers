@@ -46,6 +46,8 @@ public interface IProductRepository : ICrudRepository<Product, int>
 
 For async repository methods, use the `Async` suffix and a trailing `CancellationToken` when the repository API supports it.
 
+Completion offers `Equal` for explicit equality on every supported scalar type, even though `FindByName` already means equality. For example, it suggests `FindByNameEqual`. The equivalent aliases `Equals`, `IsEqual`, and `IsEquals` are recognized when typed; suggestions use the canonical form `Equal`.
+
 ## Build and Pack
 
 ```bash
