@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DataQI.EntityFrameworkCore.Repository;
+using DataQI.Commons.Repository;
 
 namespace CompletionSample
 {
-    public interface IProductRepository : IEntityRepository<Product, int>
+    public interface IProductRepository : ICrudRepository<Product, int>
     {
         // type here:
     }

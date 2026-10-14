@@ -8,12 +8,11 @@ DataQI.Analyzers 0.1 suggests `FindBy...` query-method names while repository in
 
 ## Install
 
-Use `DataQI.Analyzers` 0.1.0-preview.1 with DataQI.Commons 4.0.0-preview.1 (or a provider that depends on that Commons version). The host needs Roslyn 4.8 or newer: .NET SDK 8 or Visual Studio 17.8+.
+`DataQI.Commons` 4.0.0-preview.2 brings `DataQI.Analyzers` 0.1.0-preview.2 as a transitive analyzer dependency. Reference Commons alone to receive the completion provider. The host needs Roslyn 4.8 or newer: .NET SDK 8 or Visual Studio 17.8+.
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="DataQI.Commons" Version="4.0.0-preview.1" />
-  <PackageReference Include="DataQI.Analyzers" Version="0.1.0-preview.1" PrivateAssets="all" />
+  <PackageReference Include="DataQI.Commons" Version="4.0.0-preview.2" />
 </ItemGroup>
 ```
 
@@ -53,10 +52,12 @@ Completion offers `Equal` for explicit equality on every supported scalar type, 
 ```bash
 dotnet build DataQI.Analyzers.sln
 dotnet test DataQI.Analyzers.sln
-./pack.sh 0.1.0-preview.1
+./pack.sh 0.1.0-preview.2
 ```
 
 The package is written to `feed/`; the completion provider assembly is placed under `analyzers/dotnet/cs` and Roslyn dependencies are supplied by the IDE host. NuGet caches restored versions, so clear only the exact cached version if repacking the same local version.
+
+`samples/CompletionSample` references only `DataQI.Commons 4.0.0-preview.2`. For local testing, its feed must contain both the Commons and Analyzer preview.2 packages; the Analyzer is restored transitively.
 
 ## Validate in VS Code
 

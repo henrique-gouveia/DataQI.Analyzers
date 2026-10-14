@@ -109,3 +109,13 @@ The macOS UI automation attempt did not return control of the editor. The C# ext
 - Repacked `0.1.0-preview.1` to the workspace `packages/` directory and refreshed `feed/`. Moved only the exact cached Analyzer version, then force-restored the solution with the workspace `NuGet.Config`.
 - Release, package, and restored analyzer DLLs share SHA-256 `65cd443a5d63783f2022d182a2baabdc721f0e7bd68b1f3ec54976cc5cdc13c8`.
 - Rider popup observation of this correction remains pending.
+
+## 2026-10-14: Commons-only preview.2 reference
+
+- Generated local `DataQI.Commons 4.0.0-preview.2` and `DataQI.Analyzers 0.1.0-preview.2` packages in workspace `packages/`, with copies in the sample's `feed/`.
+- Commons references the Analyzer package with `IncludeAssets="analyzers"` and `PrivateAssets="none"` so consumers receive the completion provider transitively.
+- Red: a temporary consumer referencing only Commons preview.1 failed an MSBuild assertion because `DataQI.Analyzers.dll` was absent from `@(Analyzer)`.
+- Green: the same consumer referencing only Commons preview.2 passed that assertion and built with 0 warnings and 0 errors. The resolved analyzer was `dataqi.analyzers/0.1.0-preview.2/analyzers/dotnet/cs/DataQI.Analyzers.dll`.
+- `CompletionSample` now has only one PackageReference, to Commons preview.2, and inherits directly from `ICrudRepository<Product, int>`. Its resolved `@(Analyzer)` also contains the Analyzer preview.2 DLL.
+- Release build of the Analyzer solution, including the sample: 0 warnings, 0 errors. Full suites: Commons 294/294, Analyzer 210/210, runtime parity 10/10.
+- Rider popup validation of the transitive package remains for the interactive test.
