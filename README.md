@@ -90,18 +90,6 @@ If the suggestions do not appear, confirm that the package has been restored in 
 
 When testing a repacked local version, remove only that exact version from NuGet's global cache, restore again, and reload the project or restart the IDE. The package must contain `analyzers/dotnet/cs/DataQI.Analyzers.dll`. Check build output for `CS8032` or `AD0001` if the provider fails to load.
 
-## Build and Pack
-
-Building and running the tests requires the .NET 10 SDK.
-
-```bash
-dotnet build DataQI.Analyzers.sln --configuration Release
-dotnet test DataQI.Analyzers.sln --configuration Release --no-build
-./pack.sh 0.1.0-preview.2
-```
-
-The package is written to `feed/`. The IDE supplies the Roslyn dependencies; they are not bundled in the package.
-
 ## License
 
 DataQI Analyzers is released under the [MIT License](https://opensource.org/licenses/MIT).
