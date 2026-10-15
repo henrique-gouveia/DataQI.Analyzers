@@ -6,42 +6,39 @@ DataQI.Analyzers suggests `FindBy...` query-method names while you edit DataQI r
 [![codecov](https://codecov.io/gh/henrique-gouveia/DataQI.Analyzers/branch/main/graph/badge.svg)](https://codecov.io/gh/henrique-gouveia/DataQI.Analyzers)
 [![NuGet](https://img.shields.io/nuget/v/DataQI.Analyzers.svg)](https://www.nuget.org/packages/DataQI.Analyzers/)
 
-## Install
+## Getting Started
 
-Add the package directly to the project containing your repository interfaces:
+Add the package to the project that contains your repository interfaces:
 
-```xml
-<ItemGroup>
-  <PackageReference Include="DataQI.Analyzers" Version="0.1.0-preview.2" PrivateAssets="all" />
-</ItemGroup>
+```bash
+dotnet add package DataQI.Analyzers
 ```
 
-For a locally built preview, add the directory containing the `.nupkg` to your NuGet sources before restoring. The provider requires an IDE host with Roslyn 4.8 or newer.
+It is an analyzer package: it runs inside the compiler and the IDE, and adds no runtime assembly to your output. To keep it from flowing to projects that reference yours, mark it as private:
 
-## Framework Compatibility
+```xml
+<PackageReference Include="DataQI.Analyzers" Version="..." PrivateAssets="all" />
+```
 
-The library targets only `netstandard2.0`. Roslyn dependencies stay at 4.8.0 to preserve compatibility with IDE hosts using Roslyn 4.8; they are provided by the host and are not shipped as package dependencies.
+Use the version that `dotnet add package` writes. DataQI.Analyzers does not know which other packages in your solution may already reference it. If one does, restoring the project already brings the analyzer and this step is not needed; confirm by checking that the suggestions appear (see Troubleshooting).
 
-Tests target only `net10.0`. Development requires the .NET 10 SDK.
+Then configure a compatible IDE as described below. The package requires an IDE host with Roslyn 4.8 or newer. Check NuGet for available versions; development packages may require a configured local feed.
 
-## Editor Setup
+Completion follows the DataQI query-method grammar, defined by [DataQI.Commons](https://github.com/henrique-gouveia/DataQI.Commons/blob/main/README.md#query-methods). It was tested against the Commons 4.0 grammar and does not check which version a project references.
 
-- **Rider 2025.2+:** open `Settings → Editor → Inspection Settings → Roslyn` and enable **Enable Roslyn analyzers** and **Always Prefer Roslyn Completions**. The latter enables third-party completion providers ([RIDER-74403](https://youtrack.jetbrains.com/issue/RIDER-74403)).
-- **VS Code:** install the C# extension (`ms-dotnettools.csharp`) and wait for the project to load. C# Dev Kit is optional.
-- **Visual Studio 17.8+:** meets the Roslyn requirement; editor behavior has not been verified.
+### Editor Setup
+
+- **VS Code:** completion has been validated.
+- **Visual Studio:** completion has not been tested yet.
+- **Rider:** completion has been validated. Select **Enable Roslyn analyzers** and **Always Prefer Roslyn Completions** in the Roslyn settings. See [RIDER-74403](https://youtrack.jetbrains.com/issue/RIDER-74403) for third-party completion support.
 
 ## Usage
 
 Inside an interface that inherits directly or indirectly from `ICrudRepository<TEntity, TId>`, type the first letter of a member name after its return type. Completion offers `FindBy`, then public scalar properties, operators compatible with each property, `And`/`Or`, and `OrderBy` with `Asc`/`Desc`. Ctrl+Space after the return type also offers `FindBy`.
 
-For example, in a project already using the Entity Framework Core provider:
+For example:
 
 ```csharp
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using DataQI.EntityFrameworkCore.Repository;
-
 public class Product
 {
     public int Id { get; set; }
@@ -49,7 +46,7 @@ public class Product
     public decimal Price { get; set; }
 }
 
-public interface IProductRepository : IEntityRepository<Product, int>
+public interface IProductRepository : ICrudRepository<Product, int>
 {
     IEnumerable<Product> FindByNameEqual(string name);
 
@@ -61,11 +58,11 @@ public interface IProductRepository : IEntityRepository<Product, int>
 }
 ```
 
-For async repository methods, use the `Async` suffix and a trailing `CancellationToken` when the repository API supports it.
+For async repository methods, return `Task<TEntity>` or `Task<IEnumerable<TEntity>>`. The runtime strips an optional `Async` suffix and dispatches by return type. A trailing `CancellationToken` parameter is part of the grammar. Completion suggests names; it does not generate or validate the method signature.
 
 ### Suggested Operators
 
-Every supported scalar type offers `Equal` and `Not`. Additional suggestions depend on its type:
+Every supported scalar type offers `Equal` and `Not`. The following table describes current suggestions. A suggestion does not guarantee that every provider can execute it; check the provider's documentation:
 
 | Property type | Additional operators |
 |---|---|
@@ -80,14 +77,18 @@ Equality can be implicit (`FindByName`) or explicit (`FindByNameEqual`). The ali
 
 ### Ordering and Continuing a Query
 
-After a property or operator, completion offers `And`, `Or`, and `OrderBy`. After an ordered property, it offers `Asc` and `Desc`; after a direction, it offers the next property. For example: `FindByNameOrderByPriceDescIdAsc`.
+After a property or operator, completion offers `And`, `Or`, and `OrderBy`. Ordering requires a predicate first. After an ordered property, completion offers `Asc` and `Desc`; after a direction, it offers the next property. For example: `FindByNameOrderByPriceDescIdAsc`. The final direction may be omitted and defaults to ascending; use an explicit direction between successive ordered properties.
 
 The editor may close the list when you accept an item. Continue typing the next part or press Ctrl+Space to request the next suggestions. Reopening the list immediately after acceptance depends on the editor.
 
 ## Known Limitations
 
-- Only public instance scalar properties with public getters are offered, including inherited properties: primitives, `string`, `decimal`, `char`, `DateTime`, `DateTimeOffset`, `TimeSpan`, `Guid`, `byte[]`, enums, and nullable forms. Navigation properties, collections, indexers, and `[NotMapped]` properties are excluded.
+- Only public instance scalar properties with public getters are offered, including inherited properties: numeric types, `bool`, `char`, `string`, `DateTime`, `DateTimeOffset`, `TimeSpan`, `Guid`, `byte[]`, enums, and nullable forms. Navigation properties, other collections, indexers, `[NotMapped]` properties, `DateOnly`, and `TimeOnly` are excluded.
+- Getter-only properties, including calculated properties, are offered. Completion does not inspect ORM or provider mappings. Use mapped properties in query methods; mark calculated properties `[NotMapped]` to exclude them from suggestions.
 - Property names must start with an ASCII uppercase letter. Names that overlap query keywords are filtered conservatively, including `InStock`, `LinkedIn`, `LikeCount`, `TermsAndConditions`, and names ending in `Async`, `Is`, `Not`, `And`, or `Or`.
+- That filter does not catch every property/operator overlap: string properties such as `PeriodEnd` and `LineStart` are offered, but `FindByPeriodEndEndingWith` and `FindByLineStartStartingWith` are misparsed by the runtime. Use criteria with an explicit property name for these cases. Keyword filtering differs for predicates and ordering, so a property excluded from predicates may still appear after `OrderBy`.
+- After `Not`, completion repeats the operator list, including already negated operators. Avoid names such as `FindByNameNotNotIn`; type `FindByNameNotIn` or `FindByNameNotEqual` with a single `Not`.
+- Inline argument counts for `And`, `Or`, and `Not` currently show `1 arg(s)`. Junctions consume no arguments; negation uses the argument count of its operator. Follow the query-method grammar when declaring parameters.
 - Only `FindBy` is completed. Diagnostics, code fixes, other prefixes, and return-type and parameter completion are outside 0.1.
 
 ## Troubleshooting
