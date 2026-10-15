@@ -20,16 +20,17 @@ namespace DataQI.Analyzers.Completion.Support
                 ? System.Array.Empty<string>()
                 : lastProperty.Type.GetSuggestedOperators();
 
-            var suggestions = operators.Concat(new[] { "And", "Or" });
+            var suggestions = operators.Concat(new[] { "And", "Or", "OrderBy" });
 
             return suggestions.Select(op =>
             {
                 var displayText = identifierSoFar + op;
                 var argCount = QueryOperators.ArgumentCounts.TryGetValue(op, out var count) ? count : 1;
+                var inlineDescription = op == "OrderBy" ? null : $"{argCount} arg(s)";
                 return CompletionItem.Create(
                     displayText: displayText,
-                    sortText: "0000_" + displayText,
-                    inlineDescription: $"{argCount} arg(s)",
+                    sortText: $"0000_{displayText}",
+                    inlineDescription: inlineDescription,
                     tags: ImmutableArray.Create(WellKnownTags.Keyword));
             });
         }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
@@ -5,9 +6,9 @@ using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Options;
+using Microsoft.CodeAnalysis.Tags;
 using Microsoft.CodeAnalysis.Text;
 
 using DataQI.Analyzers.Completion.Extensions;
@@ -22,6 +23,7 @@ namespace DataQI.Analyzers
     [Shared]
     public class QueryMethodCompletionProvider : CompletionProvider
     {
+        private const string PrefixText = "FindBy";
         private readonly IQueryTokenizer tokenizer;
         private readonly IRepositorySymbolResolver resolver;
 
@@ -52,18 +54,22 @@ namespace DataQI.Analyzers
                 var tokenPosition = context.Position > 0 ? context.Position - 1 : context.Position;
                 var token = root.FindToken(tokenPosition);
 
-                var identifierText = ExtractIdentifierText(token, context.Position);
-                if (identifierText == null || !identifierText.StartsWith("FindBy"))
+                var identifierText = ExtractIdentifierText(token) ?? ExtractEmptyNameOnInvoke(token, context.Trigger);
+                if (identifierText == null)
                     return;
 
                 var semanticModel = await context.Document.GetSemanticModelAsync(context.CancellationToken);
                 if (!resolver.TryResolveEntityType(token, semanticModel, out var entityType))
                     return;
 
-                var properties = resolver.GetPublicInstanceProperties(entityType);
-                var propertyNames = properties.Select(p => p.Name).ToList();
+                if (!identifierText.StartsWith(PrefixText, StringComparison.Ordinal))
+                {
+                    AddPrefixItem(context, identifierText);
+                    return;
+                }
 
-                var tokens = tokenizer.Tokenize(identifierText, propertyNames);
+                var properties = resolver.GetQueryableProperties(entityType);
+                var tokens = tokenizer.Tokenize(identifierText, properties.Select(p => p.Name).ToList());
                 if (tokens.Count == 0)
                     return;
 
@@ -77,30 +83,38 @@ namespace DataQI.Analyzers
                     builderToken = tokens.Count > 1 ? tokens[tokens.Count - 2] : tokens[0];
                 }
 
+                var inOrderBy = tokens.Any(t => t.Kind == QueryTokenKind.OrderBy);
+                var safetyContext = inOrderBy ? PropertySafetyContext.OrderBy : PropertySafetyContext.Predicate;
+                var suggestible = properties.Where(p => PropertySafety.IsSafe(p.Name, safetyContext)).ToList();
+
                 var propertiesUsedSoFar = tokens
                     .Where(t => t.Kind == QueryTokenKind.Property)
                     .Select(t => properties.First(p => p.Name == t.Text))
                     .ToList();
 
-                var builder = builderToken.GetCompletionItemsBuilder();
+                var builder = builderToken.GetCompletionItemsBuilder(inOrderBy);
                 if (builder == null)
                     return;
 
-                var builderProperties = builderToken.Kind == QueryTokenKind.Prefix ||
-                    builderToken.Kind == QueryTokenKind.Junction
-                    ? properties
-                    : propertiesUsedSoFar;
+                var offersProperties = builderToken.Kind == QueryTokenKind.Prefix
+                    || builderToken.Kind == QueryTokenKind.Junction
+                    || builderToken.Kind == QueryTokenKind.OrderBy
+                    || builderToken.Kind == QueryTokenKind.Direction;
 
-                foreach (var item in builder.Build(identifierSoFar, builderProperties, null))
-                    context.AddItem(item);
+                foreach (var item in builder.Build(identifierSoFar, offersProperties ? suggestible : propertiesUsedSoFar, null))
+                {
+                    if (lastToken.Kind != QueryTokenKind.Incomplete
+                        || item.DisplayText.StartsWith(identifierText, StringComparison.OrdinalIgnoreCase))
+                        context.AddItem(item);
+                }
             }
             catch
             {
-                // PoC: swallow — never let a provider exception break the editor's completion list.
+                // swallow: never let a provider exception break the editor's completion list.
             }
         }
 
-        private static string ExtractIdentifierText(SyntaxToken token, int position)
+        private static string ExtractIdentifierText(SyntaxToken token)
         {
             if (token.Parent is VariableDeclaratorSyntax variableDeclarator)
                 return variableDeclarator.Identifier.Text;
@@ -109,6 +123,32 @@ namespace DataQI.Analyzers
                 return methodDeclaration.Identifier.Text;
 
             return null;
+        }
+
+        private static string ExtractEmptyNameOnInvoke(SyntaxToken token, CompletionTrigger trigger)
+            => trigger.Kind == CompletionTriggerKind.Invoke && IsMemberNamePosition(token) ? string.Empty : null;
+
+        // After "ReturnType " no identifier exists yet: Roslyn parses the member as an IncompleteMember whose
+        // type is the last token before the caret.
+        private static bool IsMemberNamePosition(SyntaxToken token)
+        {
+            var incompleteMember = token.Parent?.AncestorsAndSelf().OfType<IncompleteMemberSyntax>().FirstOrDefault();
+
+            return incompleteMember != null
+                && incompleteMember.Parent is InterfaceDeclarationSyntax
+                && incompleteMember.Type != null
+                && incompleteMember.Type.GetLastToken() == token;
+        }
+
+        private static void AddPrefixItem(CompletionContext context, string typedText)
+        {
+            if (!PrefixText.StartsWith(typedText, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            context.AddItem(CompletionItem.Create(
+                displayText: PrefixText,
+                sortText: $"0000_{PrefixText}",
+                tags: ImmutableArray.Create(WellKnownTags.Keyword)));
         }
     }
 }

@@ -112,26 +112,26 @@ public interface INotARepository
         }
 
         [Fact]
-        public void TestGetPublicInstancePropertiesIncludesInheritedOnes()
+        public void TestGetQueryablePropertiesIncludesInheritedOnes()
         {
             var (model, tree) = Compile();
             var token = FindMethodNameToken(tree, "IProductRepositoryViaCrud");
             resolver.TryResolveEntityType(token, model, out var entityType);
 
-            var properties = resolver.GetPublicInstanceProperties(entityType).Select(p => p.Name);
+            var properties = resolver.GetQueryableProperties(entityType).Select(p => p.Name);
 
             Assert.Contains("Id", properties);
             Assert.Contains("Name", properties);
         }
 
         [Fact]
-        public void TestGetPublicInstancePropertiesExcludesStaticAndNonPublicOnes()
+        public void TestGetQueryablePropertiesExcludesStaticAndNonPublicOnes()
         {
             var (model, tree) = Compile();
             var token = FindMethodNameToken(tree, "IProductRepositoryViaCrud");
             resolver.TryResolveEntityType(token, model, out var entityType);
 
-            var properties = resolver.GetPublicInstanceProperties(entityType).Select(p => p.Name);
+            var properties = resolver.GetQueryableProperties(entityType).Select(p => p.Name);
 
             Assert.DoesNotContain("GlobalName", properties);
             Assert.DoesNotContain("Secret", properties);
@@ -150,9 +150,94 @@ public interface INotARepository
         public void TestRejectsNullEntityType()
         {
             var exception = Assert.Throws<ArgumentException>(() =>
-                resolver.GetPublicInstanceProperties(null));
+                resolver.GetQueryableProperties(null));
 
             Assert.Equal("EntityType must not be null", exception.Message);
+        }
+
+        private readonly RepositorySymbolResolver queryableResolver = new RepositorySymbolResolver();
+
+        private static ITypeSymbol TypeOf(string source, string metadataName)
+            => TestSymbols.Compile(source).GetTypeByMetadataName(metadataName);
+
+        [Fact]
+        public void TestReturnsOnlyPublicScalarPropertiesWithPublicGetter()
+        {
+            var type = TypeOf(@"
+public class Mixed
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public int Hidden { private get; set; }
+    public int WriteOnly { set { } }
+    public int this[int index] { get { return index; } }
+    public static int Counter { get; set; }
+    [NotMapped] public string Ignored { get; set; }
+    public List<string> Tags { get; set; }
+    public Mixed Parent { get; set; }
+    private int Secret { get; set; }
+}", "Mixed");
+
+            var names = queryableResolver.GetQueryableProperties(type).Select(p => p.Name).ToList();
+
+            Assert.Equal(new[] { "Id", "Name" }, names);
+        }
+
+        [Fact]
+        public void TestReturnsInheritedPropertiesFromTheBaseTypes()
+        {
+            var type = TypeOf(@"
+public class Base { public int Id { get; set; } }
+public class Derived : Base { public string Name { get; set; } }", "Derived");
+
+            var names = queryableResolver.GetQueryableProperties(type).Select(p => p.Name).ToList();
+
+            Assert.Equal(new[] { "Name", "Id" }, names);
+        }
+
+        [Fact]
+        public void TestReturnsHiddenPropertyOnceWithDerivedType()
+        {
+            var type = TypeOf(@"
+public class Base { public string Name { get; set; } }
+public class Derived : Base { public new int Name { get; set; } }", "Derived");
+
+            var properties = queryableResolver.GetQueryableProperties(type);
+
+            var name = Assert.Single(properties);
+            Assert.Equal(SpecialType.System_Int32, name.Type.SpecialType);
+        }
+
+        [Theory]
+        [InlineData("public new List<string> Name { get; set; }")]
+        [InlineData("[NotMapped] public new string Name { get; set; }")]
+        public void TestHiddenUnqueryablePropertySuppressesBaseProperty(string declaration)
+        {
+            var type = TypeOf($@"
+public class Base {{ public string Name {{ get; set; }} public int Id {{ get; set; }} }}
+public class Derived : Base {{ {declaration} }}", "Derived");
+
+            var names = queryableResolver.GetQueryableProperties(type).Select(p => p.Name).ToList();
+
+            Assert.Equal(new[] { "Id" }, names);
+        }
+
+        [Fact]
+        public void TestReturnsNoPropertiesForEntityWithoutScalars()
+        {
+            var type = TypeOf(@"
+public class Order { public List<Order> Children { get; set; } public Order Parent { get; set; } }", "Order");
+
+            Assert.Empty(queryableResolver.GetQueryableProperties(type));
+        }
+
+        [Fact]
+        public void TestReturnsNoPropertiesForOpenGenericEntity()
+        {
+            var compilation = TestSymbols.Compile("public class Repo<T> { }");
+            var typeParameter = compilation.GetTypeByMetadataName("Repo`1").TypeParameters[0];
+
+            Assert.Empty(queryableResolver.GetQueryableProperties(typeParameter));
         }
     }
 }

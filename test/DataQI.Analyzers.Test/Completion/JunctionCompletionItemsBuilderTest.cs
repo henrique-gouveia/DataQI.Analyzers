@@ -13,15 +13,25 @@ namespace DataQI.Analyzers.Test.Completion
     public class JunctionCompletionItemsBuilderTest
     {
         [Fact]
-        public void TestBuildsBothJunctionsCorrectly()
+        public void TestBuildsJunctionsAndOrderByCorrectly()
         {
             var builder = new JunctionCompletionItemsBuilder();
 
             var items = builder.Build("FindByNameEqual", new List<IPropertySymbol>(), null).ToList();
 
-            Assert.Equal(new[] { "FindByNameEqualAnd", "FindByNameEqualOr" },
+            Assert.Equal(new[] { "FindByNameEqualAnd", "FindByNameEqualOr", "FindByNameEqualOrderBy" },
                 items.Select(item => item.DisplayText));
             Assert.All(items, item => Assert.Contains(WellKnownTags.Keyword, item.Tags));
+        }
+
+        [Fact]
+        public void TestSuggestsOrderByAfterAnOperator()
+        {
+            var items = new JunctionCompletionItemsBuilder().Build("FindByNameEqual", new IPropertySymbol[0], null).ToList();
+
+            Assert.Equal(
+                new[] { "FindByNameEqualAnd", "FindByNameEqualOr", "FindByNameEqualOrderBy" },
+                items.Select(item => item.DisplayText).ToArray());
         }
     }
 }
