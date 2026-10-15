@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>disable</Nullable>
-    <Version>0.1.0-poc.1</Version>
+    <Version>0.1.0-preview.1</Version>
     <Authors>Henrique Gouveia</Authors>
-    <Description>Data Query Interface Analyzers provides a Roslyn CompletionProvider that suggests DataQI query-method names inside repository interfaces.</Description>
+    <Description>Roslyn completion provider that suggests DataQI query-method names (FindBy...) for repositories built on DataQI.Commons 4.0.</Description>
     <Copyright>(c) Henrique Gouveia</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/henrique-gouveia/DataQI.Analyzers</RepositoryUrl>
@@ -19,6 +19,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.8.0" PrivateAssets="all" />
+    <!-- Override Roslyn's vulnerable System.Text.Json 7.0.3 in the build dependency graph (CVE-2024-30105). -->
+    <PackageReference Include="System.Text.Json" Version="10.0.13" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

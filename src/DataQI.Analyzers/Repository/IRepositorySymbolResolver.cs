@@ -8,6 +8,6 @@ namespace DataQI.Analyzers.Repository
     {
         bool TryResolveEntityType(SyntaxToken identifierToken, SemanticModel semanticModel, out ITypeSymbol entityType);
 
-        IReadOnlyList<IPropertySymbol> GetPublicInstanceProperties(ITypeSymbol entityType);
+        IReadOnlyList<IPropertySymbol> GetQueryableProperties(ITypeSymbol entityType);
     }
 }

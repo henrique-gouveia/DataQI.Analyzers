@@ -13,6 +13,13 @@ namespace DataQI.Analyzers.Query.Support
         private const string NotText = "Not";
         private const string AndText = "And";
         private const string OrText = "Or";
+        private const string OrderByText = "OrderBy";
+        private static readonly string[] DirectionTexts = { "Asc", "Desc" };
+
+        private static readonly KeyValuePair<string, string>[] AliasesLongestFirst = QueryOperators.Aliases
+            .SelectMany(entry => entry.Value.Select(alias => new KeyValuePair<string, string>(entry.Key, alias)))
+            .OrderByDescending(pair => pair.Value.Length)
+            .ToArray();
 
         public IReadOnlyList<QueryToken> Tokenize(string identifier, IReadOnlyCollection<string> propertyNames)
         {
@@ -41,6 +48,8 @@ namespace DataQI.Analyzers.Query.Support
 
             var orderedProperties = propertyNames.OrderByDescending(p => p.Length).ToList();
             var position = 0;
+            var inOrderBy = false;
+            var hasCondition = false;
 
             if (body.Length == 0)
                 tokens.Add(new QueryToken(QueryTokenKind.Incomplete, string.Empty, bodyStart, 0));
@@ -49,12 +58,39 @@ namespace DataQI.Analyzers.Query.Support
             {
                 var remaining = body.Substring(position);
 
+                if (!inOrderBy && hasCondition && StartsWithWord(remaining, OrderByText))
+                {
+                    tokens.Add(new QueryToken(QueryTokenKind.OrderBy, OrderByText, bodyStart + position, OrderByText.Length));
+                    position += OrderByText.Length;
+                    inOrderBy = true;
+                    continue;
+                }
+
+                if (inOrderBy)
+                {
+                    var direction = DirectionTexts.FirstOrDefault(text => StartsWithWord(remaining, text));
+                    if (direction != null)
+                    {
+                        tokens.Add(new QueryToken(QueryTokenKind.Direction, direction, bodyStart + position, direction.Length));
+                        position += direction.Length;
+                        continue;
+                    }
+                }
+
                 var property = orderedProperties.FirstOrDefault(p =>
                     remaining.StartsWith(p, StringComparison.Ordinal));
                 if (property != null)
                 {
                     tokens.Add(new QueryToken(QueryTokenKind.Property, property, bodyStart + position, property.Length));
                     position += property.Length;
+                    hasCondition = true;
+                    continue;
+                }
+
+                if (inOrderBy)
+                {
+                    tokens.Add(new QueryToken(QueryTokenKind.Incomplete, remaining, bodyStart + position, remaining.Length));
+                    position = body.Length;
                     continue;
                 }
 
@@ -100,36 +136,20 @@ namespace DataQI.Analyzers.Query.Support
         private static bool IsFollowedByLowercase(string text, int indexAfterMatch)
             => indexAfterMatch < text.Length && char.IsLower(text[indexAfterMatch]);
 
+        private static bool StartsWithWord(string text, string word)
+            => text.StartsWith(word, StringComparison.Ordinal) && !IsFollowedByLowercase(text, word.Length);
+
         private static OperatorMatch TryMatchOperator(string remaining)
         {
-            var hasIsPrefix = remaining.StartsWith("Is", StringComparison.Ordinal);
-            var candidate = hasIsPrefix ? remaining.Substring(2) : remaining;
-
-            var matches = QueryOperators.Aliases
-                .SelectMany(entry => entry.Value.Select(alias => new
-                {
-                    Canonical = entry.Key,
-                    Alias = hasIsPrefix && alias.StartsWith("Is", StringComparison.Ordinal)
-                        ? alias.Substring(2)
-                        : alias
-                }))
-                .Select(match => new
-                {
-                    match.Canonical,
-                    match.Alias,
-                    MatchedLength = (hasIsPrefix ? 2 : 0) + match.Alias.Length
-                })
-                .OrderByDescending(match => match.MatchedLength);
-
-            foreach (var match in matches)
+            foreach (var pair in AliasesLongestFirst)
             {
-                if (!candidate.StartsWith(match.Alias, StringComparison.Ordinal))
+                if (!remaining.StartsWith(pair.Value, StringComparison.Ordinal))
                     continue;
 
-                if (IsFollowedByLowercase(remaining, match.MatchedLength))
+                if (IsFollowedByLowercase(remaining, pair.Value.Length))
                     continue;
 
-                return new OperatorMatch(match.Canonical, match.MatchedLength);
+                return new OperatorMatch(pair.Key, pair.Value.Length);
             }
 
             return null;

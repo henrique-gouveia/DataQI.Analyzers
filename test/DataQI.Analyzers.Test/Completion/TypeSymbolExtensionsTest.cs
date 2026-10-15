@@ -62,7 +62,7 @@ public class Fixture {{ public {classBody} Value {{ get; set; }} }}";
         {
             var operators = GetTypeOfFirstProperty("bool").GetSuggestedOperators();
 
-            Assert.Equal(new[] { "Not" }, operators);
+            Assert.Equal(new[] { "Equal", "Not" }, operators);
         }
 
         [Fact]
@@ -86,13 +86,53 @@ public class Fixture {{ public {classBody} Value {{ get; set; }} }}";
         }
 
         [Fact]
-        public void TestSuggestsComparisonOperatorsForGuid()
+        public void TestDoesNotSuggestOrderingOperatorsForGuid()
         {
             var operators = GetTypeOfFirstProperty("Guid").GetSuggestedOperators();
 
+            Assert.DoesNotContain("GreaterThan", operators);
+            Assert.DoesNotContain("Between", operators);
+            Assert.Contains("In", operators);
+            Assert.DoesNotContain("Null", operators);
+        }
+
+        [Fact]
+        public void TestSuggestsEnumOperatorsForUserEnumNamedGuid()
+        {
+            var compilation = TestSymbols.Compile(@"
+public enum Guid { First, Second }
+public class Holder { public Guid Value { get; set; } }");
+            var type = compilation.GetTypeByMetadataName("Holder")
+                .GetMembers("Value").OfType<IPropertySymbol>().Single().Type;
+
+            var operators = type.GetSuggestedOperators();
+
             Assert.Contains("GreaterThan", operators);
             Assert.Contains("Between", operators);
-            Assert.DoesNotContain("Null", operators);
+        }
+
+        [Theory]
+        [InlineData("int", true)]
+        [InlineData("int?", true)]
+        [InlineData("string", true)]
+        [InlineData("decimal", true)]
+        [InlineData("char", true)]
+        [InlineData("DateTime", true)]
+        [InlineData("DateTimeOffset?", true)]
+        [InlineData("TimeSpan", true)]
+        [InlineData("Guid", true)]
+        [InlineData("Guid?", true)]
+        [InlineData("byte[]", true)]
+        [InlineData("Color", true)]
+        [InlineData("Color?", true)]
+        [InlineData("object", false)]
+        [InlineData("int[]", false)]
+        [InlineData("List<string>", false)]
+        [InlineData("IEnumerable<int>", false)]
+        [InlineData("Holder", false)]
+        public void TestIdentifiesScalarTypes(string typeName, bool expected)
+        {
+            Assert.Equal(expected, TestSymbols.Property(typeName).Type.IsScalar());
         }
     }
 }

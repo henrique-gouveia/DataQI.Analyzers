@@ -9,7 +9,7 @@ namespace DataQI.Analyzers.Query
             { "Between", new[] { "Between", "IsBetween" } },
             { "Containing", new[] { "Containing", "IsContaining", "Contains" } },
             { "EndingWith", new[] { "EndingWith", "IsEndingWith", "EndsWith" } },
-            { "Equal", new[] { "Equal", "IsEqual" } },
+            { "Equal", new[] { "Equal", "IsEqual", "Equals", "IsEquals" } },
             { "GreaterThan", new[] { "GreaterThan", "IsGreaterThan" } },
             { "GreaterThanEqual", new[] { "GreaterThanEqual", "IsGreaterThanEqual" } },
             { "In", new[] { "In", "IsIn" } },

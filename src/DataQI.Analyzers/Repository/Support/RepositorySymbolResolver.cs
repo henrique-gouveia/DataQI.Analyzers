@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using DataQI.Analyzers.Completion.Extensions;
 using DataQI.Analyzers.Util;
 
 namespace DataQI.Analyzers.Repository.Support
@@ -49,23 +50,33 @@ namespace DataQI.Analyzers.Repository.Support
             return false;
         }
 
-        public IReadOnlyList<IPropertySymbol> GetPublicInstanceProperties(ITypeSymbol entityType)
+        public IReadOnlyList<IPropertySymbol> GetQueryableProperties(ITypeSymbol entityType)
         {
             Assert.NotNull(entityType, "EntityType must not be null");
 
             var properties = new List<IPropertySymbol>();
-            var current = entityType;
+            var names = new HashSet<string>();
 
-            while (current != null)
+            for (var current = entityType; current != null; current = current.BaseType)
             {
-                properties.AddRange(current.GetMembers()
-                    .OfType<IPropertySymbol>()
-                    .Where(p => !p.IsStatic && p.DeclaredAccessibility == Accessibility.Public));
-
-                current = current.BaseType;
+                foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
+                {
+                    // Walking from the most derived type, the first occurrence of a name wins.
+                    if (names.Add(property.Name) && IsQueryable(property))
+                        properties.Add(property);
+                }
             }
 
             return properties;
         }
+
+        private static bool IsQueryable(IPropertySymbol property)
+            => !property.IsStatic
+                && !property.IsIndexer
+                && property.DeclaredAccessibility == Accessibility.Public
+                && property.GetMethod != null
+                && property.GetMethod.DeclaredAccessibility == Accessibility.Public
+                && !property.GetAttributes().Any(attribute => attribute.AttributeClass?.Name == "NotMappedAttribute")
+                && property.Type.IsScalar();
     }
 }

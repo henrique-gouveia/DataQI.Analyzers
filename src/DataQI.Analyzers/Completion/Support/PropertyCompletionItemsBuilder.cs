@@ -6,8 +6,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Tags;
 
-using DataQI.Analyzers.Completion.Extensions;
-
 namespace DataQI.Analyzers.Completion.Support
 {
     public class PropertyCompletionItemsBuilder : ICompletionItemsBuilder
@@ -19,7 +17,7 @@ namespace DataQI.Analyzers.Completion.Support
                 var displayText = identifierSoFar + property.Name;
                 return CompletionItem.Create(
                     displayText: displayText,
-                    sortText: "0000_" + displayText,
+                    sortText: $"0000_{displayText}",
                     inlineDescription: property.Type.ToDisplayString(),
                     tags: ImmutableArray.Create(WellKnownTags.Property));
             });
