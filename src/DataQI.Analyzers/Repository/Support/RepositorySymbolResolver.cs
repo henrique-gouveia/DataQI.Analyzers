@@ -12,8 +12,9 @@ namespace DataQI.Analyzers.Repository.Support
 {
     public class RepositorySymbolResolver : IRepositorySymbolResolver
     {
+        private const string RepositoryName = "IRepository";
         private const string CrudRepositoryName = "ICrudRepository";
-        private const string CrudRepositoryNamespace = "DataQI.Commons.Repository";
+        private const string RepositoryNamespace = "DataQI.Commons.Repository";
 
         public bool TryResolveEntityType(SyntaxToken identifierToken, SemanticModel semanticModel, out ITypeSymbol entityType)
         {
@@ -37,10 +38,11 @@ namespace DataQI.Analyzers.Repository.Support
 
             foreach (var candidate in candidates)
             {
-                if (candidate.Name != CrudRepositoryName || candidate.TypeArguments.Length != 2)
+                if ((candidate.Name != RepositoryName && candidate.Name != CrudRepositoryName)
+                    || candidate.TypeArguments.Length != 2)
                     continue;
 
-                if (candidate.ContainingNamespace?.ToDisplayString() != CrudRepositoryNamespace)
+                if (candidate.ContainingNamespace?.ToDisplayString() != RepositoryNamespace)
                     continue;
 
                 entityType = candidate.TypeArguments[0];

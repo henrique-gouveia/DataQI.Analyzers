@@ -64,6 +64,68 @@ public interface INotARepository
             return (compilation.GetSemanticModel(tree), tree);
         }
 
+        [Theory]
+        [InlineData("DataQI.Commons.Repository.IRepository<Product, int>")]
+        [InlineData("DataQI.Commons.Repository.ICrudRepository<Product, int>")]
+        [InlineData("DataQI.Commons.Repository.IPagedRepository<Product, int>")]
+        [InlineData("DataQI.Commons.Repository.ICrudRepository<Product, int>, DataQI.Commons.Repository.IPagedRepository<Product, int>")]
+        public void TestResolvesIndependentRepositoryCapabilities(string baseTypes)
+        {
+            var (model, tree) = CompileModernRepository(baseTypes);
+
+            var resolved = resolver.TryResolveEntityType(
+                FindMethodNameToken(tree, "IProductRepository"), model, out var entityType);
+
+            Assert.True(resolved);
+            Assert.Equal("Product", entityType.Name);
+        }
+
+        [Theory]
+        [InlineData("Other.IRepository<Product, int>")]
+        [InlineData("Other.ICrudRepository<Product, int>")]
+        [InlineData("DataQI.Commons.Repository.IRepository<Product>")]
+        [InlineData("DataQI.Commons.Repository.ICrudRepository<Product>")]
+        public void TestRejectsRepositoryLookalikes(string baseTypes)
+        {
+            var (model, tree) = CompileModernRepository(baseTypes);
+
+            var resolved = resolver.TryResolveEntityType(
+                FindMethodNameToken(tree, "IProductRepository"), model, out var entityType);
+
+            Assert.False(resolved);
+            Assert.Null(entityType);
+        }
+
+        private static (SemanticModel Model, SyntaxTree Tree) CompileModernRepository(string baseTypes)
+        {
+            var source = @"
+namespace DataQI.Commons.Repository
+{
+    public interface IRepository<TEntity, TId> { }
+    public interface ICrudRepository<TEntity, TId> : IRepository<TEntity, TId> { }
+    public interface IPagedRepository<TEntity, TId> : IRepository<TEntity, TId> { }
+    public interface IRepository<TEntity> { }
+    public interface ICrudRepository<TEntity> { }
+}
+namespace Other
+{
+    public interface IRepository<TEntity, TId> { }
+    public interface ICrudRepository<TEntity, TId> { }
+}
+public class Product { public string Name { get; set; } }
+public interface IProductRepository : " + baseTypes + @"
+{
+    void FindByNa();
+}";
+            var tree = CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.CSharp7_3));
+            var compilation = CSharpCompilation.Create("ModernRepository", new[] { tree },
+                new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) },
+                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            Assert.Empty(compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error));
+
+            return (compilation.GetSemanticModel(tree), tree);
+        }
+
         private static SyntaxToken FindMethodNameToken(SyntaxTree tree, string interfaceName)
         {
             var root = tree.GetRoot();
