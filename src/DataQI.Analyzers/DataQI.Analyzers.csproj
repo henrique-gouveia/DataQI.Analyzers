@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>disable</Nullable>
-    <Version>0.1.0-preview.1</Version>
+    <Version>0.1.0</Version>
     <Authors>Henrique Gouveia</Authors>
     <Description>Roslyn completion provider that suggests DataQI query-method names (FindBy...) for repositories built on DataQI.Commons 4.0.</Description>
     <Copyright>(c) Henrique Gouveia</Copyright>
