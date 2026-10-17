@@ -86,6 +86,28 @@ namespace CompletionSample
                 item => item.SortText != null && item.SortText.StartsWith("0000_"));
         }
 
+        [Theory]
+        [InlineData("IRepository<Product, int>")]
+        [InlineData("ICrudRepository<Product, int>")]
+        [InlineData("IPagedRepository<Product, int>")]
+        [InlineData("ICrudRepository<Product, int>, DataQI.Commons.Repository.IPagedRepository<Product, int>")]
+        public async Task TestProviderContributesCompletionsForIndependentCapabilities(string baseTypes)
+        {
+            var source = SampleSource.Replace(
+                "    public interface ICrudRepository<TEntity, TId> { }",
+                @"    public interface IRepository<TEntity, TId> { }
+    public interface ICrudRepository<TEntity, TId> : IRepository<TEntity, TId> { }
+    public interface IPagedRepository<TEntity, TId> : IRepository<TEntity, TId> { }")
+                .Replace("IProductRepository : DataQI.Commons.Repository.ICrudRepository<Product, int>",
+                    "IProductRepository : DataQI.Commons.Repository." + baseTypes);
+
+            var completions = await GetCompletionsAsync(source, "FindByNa", true);
+
+            Assert.NotNull(completions);
+            Assert.Contains(completions.ItemsList,
+                item => item.DisplayText == "FindByName" && CompletionTestHost.IsDataQIItem(item));
+        }
+
         [Fact]
         public void TestProviderTriggerRulesCorrectly()
         {
