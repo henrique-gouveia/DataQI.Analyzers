@@ -128,7 +128,7 @@ namespace DataQI.Analyzers
         private static string ExtractEmptyNameOnInvoke(SyntaxToken token, CompletionTrigger trigger)
             => trigger.Kind == CompletionTriggerKind.Invoke && IsMemberNamePosition(token) ? string.Empty : null;
 
-        // After "ReturnType " no identifier exists yet: Roslyn parses the member as an IncompleteMember whose
+        // After "ReturnType" no identifier exists yet: Roslyn parses the member as an IncompleteMember whose
         // type is the last token before the caret.
         private static bool IsMemberNamePosition(SyntaxToken token)
         {
